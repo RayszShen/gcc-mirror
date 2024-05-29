@@ -1779,6 +1779,8 @@ static const scoped_attribute_specs *const rs6000_attribute_table[] =
 #undef TARGET_OVERLAP_OP_BY_PIECES_P
 #define TARGET_OVERLAP_OP_BY_PIECES_P hook_bool_void_true
 
+#undef TARGET_CALL_OFFSET_RETURN_LABEL
+#define TARGET_CALL_OFFSET_RETURN_LABEL rs6000_call_offset_return_label
 
 
 /* Processor table.  */
@@ -14820,6 +14822,22 @@ rs6000_assemble_integer (rtx x, unsigned int size, int aligned_p)
     }
 #endif /* RELOCATABLE_NEEDS_FIXUP */
   return default_assemble_integer (x, size, aligned_p);
+}
+
+/* Return the offset to be added to the label output after CALL_INSN
+   to compute the address to be placed in DW_AT_call_return_pc.  */
+
+static int
+rs6000_call_offset_return_label (rtx_insn *call_insn)
+{
+  /* All rs6000 CALL_INSN output patterns start with a b or bl, always
+     a 4-byte instruction, but some output patterns issue other
+     opcodes afterwards.  The return label is issued after the entire
+     call insn, including any such post-call opcodes.  Instead of
+     figuring out which cases need adjustments, we compute the offset
+     back to the address of the call opcode proper, then add the
+     constant 4 bytes, to get the address after that opcode.  */
+  return 4 - get_attr_length (call_insn);
 }
 
 /* Return a template string for assembly to emit when making an
